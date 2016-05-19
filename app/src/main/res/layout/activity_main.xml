@@ -9,8 +9,96 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.personal.het.bluetoothmessage.MainActivity">
 
+    <EditText
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/txtMessage"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:text="Enter message to send"
+        android:gravity="center" />
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!" />
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="Paired Devices"
+        android:id="@+id/textView"
+        android:layout_alignTop="@+id/textView2"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="Discovered Devices"
+        android:id="@+id/textView2"
+        android:layout_below="@+id/txtMessage"
+        android:layout_alignRight="@+id/txtMessage"
+        android:layout_alignEnd="@+id/txtMessage"
+        android:layout_marginTop="71dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="130sp"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Message Received will be displayed here"
+        android:id="@+id/msgReceived"
+        android:gravity="center"
+        android:layout_above="@+id/btnDiscover"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <Button
+        android:layout_width="150sp"
+        android:layout_height="wrap_content"
+        android:text="Send"
+        android:id="@+id/btnSend"
+        android:layout_below="@+id/txtMessage"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <Button
+        android:layout_width="150sp"
+        android:layout_height="wrap_content"
+        android:text="Receive"
+        android:id="@+id/btnReceive"
+        android:layout_alignBottom="@+id/btnSend"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Start Discovery"
+        android:id="@+id/btnDiscover"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true" />
+
+    <ListView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/lvPairedDevices"
+        android:layout_below="@+id/textView"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignRight="@+id/btnSend"
+        android:layout_alignEnd="@+id/btnSend"
+        android:layout_above="@+id/msgReceived" />
+
+    <ListView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/lvDiscoveredDevices"
+        android:layout_alignTop="@+id/lvPairedDevices"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignLeft="@+id/btnReceive"
+        android:layout_alignStart="@+id/btnReceive"
+        android:layout_above="@+id/msgReceived" />
+
 </RelativeLayout>
