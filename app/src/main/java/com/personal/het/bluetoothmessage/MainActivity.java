@@ -14,15 +14,19 @@ import android.widget.Toast;
 import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
-    private BluetoothAdapter bAdapter = BluetoothAdapter.getDefaultAdapter();
-    private ArrayAdapter<String> bArrayAdapter = new ArrayAdapter<>(this, R.layout.activity_main);
-    private ListView lvPairedDevices = (ListView) findViewById(R.id.lvPairedDevices);
-    private TextView textView = (TextView) findViewById(R.id.textView);
+    private BluetoothAdapter bAdapter;
+    private ArrayAdapter<String> bArrayAdapter;
+    private ListView lvPairedDevices;
+    private TextView textView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        bAdapter = BluetoothAdapter.getDefaultAdapter();
+        bArrayAdapter = new ArrayAdapter<>(this, R.layout.activity_main, R.id.lvPairedDevices);
+        lvPairedDevices = (ListView) findViewById(R.id.lvPairedDevices);
+        textView = (TextView) findViewById(R.id.textView);
     }
 
     public void onStart(){
