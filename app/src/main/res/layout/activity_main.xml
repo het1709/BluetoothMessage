@@ -16,7 +16,7 @@
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
         android:text="Enter message to send"
-        android:gravity="center" />
+        android:gravity="center"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -41,14 +41,18 @@
 
     <TextView
         android:layout_width="match_parent"
-        android:layout_height="130sp"
+        android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="Message Received will be displayed here"
         android:id="@+id/msgReceived"
         android:gravity="center"
+        android:password="false"
+        android:typeface="normal"
+        android:clickable="false"
+        android:editable="false"
         android:layout_above="@+id/btnDiscover"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true" />
 
     <Button
         android:layout_width="150sp"
@@ -73,11 +77,12 @@
         android:layout_height="wrap_content"
         android:text="Start Discovery"
         android:id="@+id/btnDiscover"
+        android:onClick="startDiscovery"
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
+        android:layout_alignParentStart="false"
         android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true" />
+        android:layout_alignParentEnd="false" />
 
     <ListView
         android:layout_width="wrap_content"
@@ -100,5 +105,17 @@
         android:layout_alignLeft="@+id/btnReceive"
         android:layout_alignStart="@+id/btnReceive"
         android:layout_above="@+id/msgReceived" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Nothing to show"
+        android:id="@+id/msgNoPaired"
+        android:layout_alignTop="@+id/lvPairedDevices"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="84dp"
+        android:visibility="invisible" />
 
 </RelativeLayout>
