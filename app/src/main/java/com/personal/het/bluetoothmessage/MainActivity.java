@@ -24,9 +24,10 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         bAdapter = BluetoothAdapter.getDefaultAdapter();
-        bArrayAdapter = new ArrayAdapter<>(this, R.layout.activity_main, R.id.lvPairedDevices);
+        bArrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
         lvPairedDevices = (ListView) findViewById(R.id.lvPairedDevices);
         textView = (TextView) findViewById(R.id.textView);
+
     }
 
     public void onStart(){
@@ -59,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
             }
             lvPairedDevices.setAdapter(bArrayAdapter);
         } else {
-            textView.setText("THERE ARE NO PAIRED DEVICES");
+            textView.setText(R.string.noPairedDevices);
         }
     }
 }

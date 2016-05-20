@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Bluetooth Message</string>
+    <string name="noPairedDevices">THERE ARE NO PAIRED DEVICES</string>
 </resources>
