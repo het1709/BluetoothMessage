@@ -26,6 +26,35 @@ public class MainActivity extends AppCompatActivity {
     private ListView lvDiscoveredDevices;
     private EditText txtMessage;
     private TextView msgNoPaired;
+    private TextView msgNoDiscovered;
+
+    //private BroadcastReceiver bReceiver;
+
+    //Sets up a BroadcastReceiver to handle various Bluetooth related Intents
+    private final BroadcastReceiver bReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            //When discovery finds a device
+            Toast.makeText(getApplicationContext(), action, Toast.LENGTH_SHORT).show();
+            if(BluetoothDevice.ACTION_FOUND.equals(action)){
+                //Get BluetoothDevice from Intent
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                if(device.getBondState() != BluetoothDevice.BOND_BONDED){
+                    Toast.makeText(getApplicationContext(), device.getName(), Toast.LENGTH_SHORT).show();
+                    bDiscoveredAdapter.add(device.getName() + "\n" + device.getAddress());
+                }
+            } else if(BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(action)){
+                Toast.makeText(getApplicationContext(), "Discovery has started successfully", Toast.LENGTH_SHORT).show();
+            } else if(BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)){
+                Toast.makeText(getApplicationContext(), "Discovery has ended", Toast.LENGTH_SHORT).show();
+                if(bDiscoveredAdapter.isEmpty()) {
+                    msgNoDiscovered.setVisibility(View.VISIBLE);
+                }
+            }
+        }
+    };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,7 +66,16 @@ public class MainActivity extends AppCompatActivity {
         lvPairedDevices = (ListView) findViewById(R.id.lvPairedDevices);
         lvDiscoveredDevices = (ListView) findViewById(R.id.lvDiscoveredDevices);
         msgNoPaired = (TextView) findViewById(R.id.msgNoPaired);
+        msgNoDiscovered = (TextView) findViewById(R.id.msgNoDiscovered);
         txtMessage = (EditText) findViewById(R.id.txtMessage);
+        lvDiscoveredDevices.setAdapter(bDiscoveredAdapter);
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(BluetoothDevice.ACTION_FOUND);
+        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
+        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
+        registerReceiver(bReceiver, filter);
+
         txtMessage.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -46,30 +84,12 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         checkBTStatus();
-        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-        registerReceiver(bReceiver, filter);
-        //getPairedDevices();
     }
-
-    private final BroadcastReceiver bReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            //When discovery finds a device
-            if(BluetoothDevice.ACTION_FOUND.equals(action)){
-                //Get BluetoothDevice from Intent
-                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                bDiscoveredAdapter.add(device.getName() + "\n" + device.getAddress());
-                bDiscoveredAdapter.notifyDataSetChanged();
-            }
-            lvDiscoveredDevices.setAdapter(bDiscoveredAdapter);
-        }
-    };
-
 
     public void onStart(){
         super.onStart();
         msgNoPaired.setVisibility(View.INVISIBLE);
+        msgNoDiscovered.setVisibility(View.INVISIBLE);
         bPairedAdapter.clear();
         bDiscoveredAdapter.clear();
         bPairedAdapter.notifyDataSetChanged();
@@ -83,10 +103,16 @@ public class MainActivity extends AppCompatActivity {
 
     public void onDestroy(){
         super.onDestroy();
+        if(bAdapter != null){
+            bAdapter.cancelDiscovery();
+        }
         unregisterReceiver(bReceiver);
     }
 
-    public void startDiscovery(){
+    //Starts discovery
+    public void discover(View view){
+        bDiscoveredAdapter.clear();
+        bAdapter.cancelDiscovery();
         bAdapter.startDiscovery();
     }
 
