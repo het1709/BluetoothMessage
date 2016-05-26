@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.bluetooth.BluetoothAdapter;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -28,6 +29,7 @@ import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
     private BluetoothAdapter bAdapter;
+    private BluetoothDevice bDevice;
     private ArrayAdapter<String> bPairedAdapter;
     private ArrayAdapter<String> bDiscoveredAdapter;
     private ListView lvPairedDevices;
@@ -36,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView msgNoPaired;
     private TextView msgNoDiscovered;
     private TextView msgReceived;
+    private boolean deviceSelected = false;
 
     private final UUID myUUID = UUID.fromString("f6ea2b4b-386d-4bcf-96e7-e3a4d2501a13");
     private final int MESSAGE_READ = 1;
@@ -107,6 +110,18 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             }
         });
+
+        lvPairedDevices.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String device = bPairedAdapter.getItem(position);
+                String deviceName =  device.substring(0, (device.length()) - 18);
+                String address = device.substring(deviceName.length()+1, device.length());
+                bDevice = bAdapter.getRemoteDevice(address);
+                deviceSelected = true;
+                Toast.makeText(getApplicationContext(), address, Toast.LENGTH_SHORT).show();
+            }
+        });
         checkBTStatus();
     }
 
@@ -142,12 +157,19 @@ public class MainActivity extends AppCompatActivity {
 
     //Implement Server side connection thread
     public void connectAsServer(View view){
-
+        AcceptThread server = new AcceptThread();
+        server.run();
     }
 
     //Implement Client side connection thread
     public void connectAsClient(View view){
-
+        if(!deviceSelected){
+            Toast.makeText(getApplicationContext(), "Please select a device first", Toast.LENGTH_SHORT).show();
+        } else {
+            ConnectThread client = new ConnectThread(bDevice);
+            client.run();
+            deviceSelected = false;
+        }
     }
 
     //Checks if the device supports Bluetooth and enables it
@@ -166,7 +188,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    //Gets the Paired Devices
+    /**Gets the Paired Devices*/
     public void getPairedDevices(){
         Set<BluetoothDevice> pairedDevices = bAdapter.getBondedDevices();
         if(pairedDevices.size()>0) {
