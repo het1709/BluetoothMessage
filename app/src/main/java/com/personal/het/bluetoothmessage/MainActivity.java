@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.bluetooth.BluetoothAdapter;
@@ -34,11 +35,21 @@ public class MainActivity extends AppCompatActivity {
     private EditText txtMessage;
     private TextView msgNoPaired;
     private TextView msgNoDiscovered;
+    private TextView msgReceived;
 
     private final UUID myUUID = UUID.fromString("f6ea2b4b-386d-4bcf-96e7-e3a4d2501a13");
     private final int MESSAGE_READ = 1;
 
-    private android.os.Handler bHandler = new Handler();
+    private Handler bHandler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            if(msg.what == MESSAGE_READ){
+                String message = msg.obj.toString();
+                msgReceived.setText(message);
+            }
+        }
+    };
     //private BroadcastReceiver bReceiver;
 
     //Sets up a BroadcastReceiver to handle various Bluetooth related Intents
@@ -78,8 +89,10 @@ public class MainActivity extends AppCompatActivity {
         lvDiscoveredDevices = (ListView) findViewById(R.id.lvDiscoveredDevices);
         msgNoPaired = (TextView) findViewById(R.id.msgNoPaired);
         msgNoDiscovered = (TextView) findViewById(R.id.msgNoDiscovered);
+        msgReceived = (TextView) findViewById(R.id.msgReceived);
         txtMessage = (EditText) findViewById(R.id.txtMessage);
         lvDiscoveredDevices.setAdapter(bDiscoveredAdapter);
+
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothDevice.ACTION_FOUND);
@@ -192,6 +205,12 @@ public class MainActivity extends AppCompatActivity {
                 /*manageConnectedSocket(socket);
                 mmServerSocket.close();
                 break;*/
+                ConnectedThread connectedThread = new ConnectedThread(socket);
+                byte[] message = txtMessage.getText().toString().getBytes();
+                connectedThread.write(message);
+                try{
+                    bServerSocket.close();
+                }catch(IOException e){}
             }
 
         }
@@ -204,7 +223,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    //Client side thread. NOTE: Client initiates connection
+    /**Client side thread. NOTE: Client initiates connection*/
     private class ConnectThread extends Thread{
         private final BluetoothSocket bSocket;
         private final BluetoothDevice bDevice;
@@ -213,7 +232,7 @@ public class MainActivity extends AppCompatActivity {
             BluetoothSocket temp = null;
             bDevice = device;
             try{
-                temp = device.createRfcommSocketToServiceRecord(myUUID);
+                temp = bDevice.createRfcommSocketToServiceRecord(myUUID);
             }catch(IOException e){}
             bSocket = temp;
         }
@@ -228,6 +247,8 @@ public class MainActivity extends AppCompatActivity {
                 }catch(IOException closeException){}
                 return;
             }
+            ConnectedThread connectedThread = new ConnectedThread(bSocket);
+            connectedThread.run();
             //Manage the connection by implementing a separate thread (the ConnectedThread)
             //manageConnectedSocket(bSocket);
         }
@@ -271,11 +292,16 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+        //Call from Main activity to send data
         public void write(byte[] bytes){
             try{
                 outStream.write(bytes);
-            }catch(IOException e){}
+            }catch(IOException e){
+                Toast.makeText(getApplicationContext(), "Message couldn't be sent", Toast.LENGTH_SHORT).show();
+                cancel();
+            }
         }
+
         public void cancel(){
             try{
                 bSocket.close();
