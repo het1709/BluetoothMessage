@@ -1,10 +1,13 @@
 package com.personal.het.bluetoothmessage;
 
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothServerSocket;
+import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.bluetooth.BluetoothAdapter;
@@ -16,7 +19,11 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Set;
+import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
     private BluetoothAdapter bAdapter;
@@ -28,6 +35,10 @@ public class MainActivity extends AppCompatActivity {
     private TextView msgNoPaired;
     private TextView msgNoDiscovered;
 
+    private final UUID myUUID = UUID.fromString("f6ea2b4b-386d-4bcf-96e7-e3a4d2501a13");
+    private final int MESSAGE_READ = 1;
+
+    private android.os.Handler bHandler = new Handler();
     //private BroadcastReceiver bReceiver;
 
     //Sets up a BroadcastReceiver to handle various Bluetooth related Intents
@@ -36,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             //When discovery finds a device
-            Toast.makeText(getApplicationContext(), action, Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getApplicationContext(), action, Toast.LENGTH_SHORT).show();
             if(BluetoothDevice.ACTION_FOUND.equals(action)){
                 //Get BluetoothDevice from Intent
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
@@ -116,6 +127,16 @@ public class MainActivity extends AppCompatActivity {
         bAdapter.startDiscovery();
     }
 
+    //Implement Server side connection thread
+    public void connectAsServer(View view){
+
+    }
+
+    //Implement Client side connection thread
+    public void connectAsClient(View view){
+
+    }
+
     //Checks if the device supports Bluetooth and enables it
     public void checkBTStatus(){
         if(bAdapter == null){
@@ -143,5 +164,123 @@ public class MainActivity extends AppCompatActivity {
         } else {
             msgNoPaired.setVisibility(View.VISIBLE);
         }
+    }
+
+    //Server side thread. NOTE: Server searched for the connection initiated by Client
+    private class AcceptThread extends Thread{
+        private final BluetoothServerSocket bServerSocket;
+
+        public AcceptThread(){
+            BluetoothServerSocket temp = null;
+            try{
+                temp = bAdapter.listenUsingRfcommWithServiceRecord("BluetoothMessage", myUUID);
+            }catch(IOException e){}
+            bServerSocket = temp;
+        }
+
+        public void run(){
+            BluetoothSocket socket = null;
+            while(true){
+                try{
+                    socket = bServerSocket.accept();
+                }catch (IOException e){
+                    break;
+                }
+            }
+            if(socket != null){
+                //Manage connection in a separate thread (the ConnectedThread)
+                /*manageConnectedSocket(socket);
+                mmServerSocket.close();
+                break;*/
+            }
+
+        }
+
+        //Cancels the listening socket and forces thread to close
+        public void cancel(){
+            try{
+                bServerSocket.close();
+            }catch (IOException e){}
+        }
+    }
+
+    //Client side thread. NOTE: Client initiates connection
+    private class ConnectThread extends Thread{
+        private final BluetoothSocket bSocket;
+        private final BluetoothDevice bDevice;
+
+        public ConnectThread(BluetoothDevice device){
+            BluetoothSocket temp = null;
+            bDevice = device;
+            try{
+                temp = device.createRfcommSocketToServiceRecord(myUUID);
+            }catch(IOException e){}
+            bSocket = temp;
+        }
+
+        public void run(){
+            bAdapter.cancelDiscovery();
+            try{
+                bSocket.connect();
+            }catch(IOException connectException){
+                try{
+                    bSocket.close();
+                }catch(IOException closeException){}
+                return;
+            }
+            //Manage the connection by implementing a separate thread (the ConnectedThread)
+            //manageConnectedSocket(bSocket);
+        }
+
+        public void cancel(){
+            try{
+                bSocket.close();
+            }catch(IOException e){}
+        }
+    }
+
+    //Thread used to manage the connection
+    private class ConnectedThread extends Thread{
+        private final BluetoothSocket bSocket;
+        private final InputStream inStream;
+        private final OutputStream outStream;
+
+        public ConnectedThread(BluetoothSocket socket){
+            bSocket = socket;
+            InputStream tempIn = null;
+            OutputStream tempOut = null;
+            try{
+                tempIn = socket.getInputStream();
+                tempOut = socket.getOutputStream();
+            } catch (IOException e){}
+            inStream = tempIn;
+            outStream = tempOut;
+        }
+
+        //Receive data. Used by client.
+        public void run(){
+            byte[] buffer = new byte[1024];
+            int bytes; //bytes returned from read();
+            while(true){
+                try{
+                    bytes = inStream.read(buffer);
+                    bHandler.obtainMessage(MESSAGE_READ, bytes, -1, buffer).sendToTarget();
+                } catch(IOException e){
+                    break;
+                }
+            }
+        }
+
+        public void write(byte[] bytes){
+            try{
+                outStream.write(bytes);
+            }catch(IOException e){}
+        }
+        public void cancel(){
+            try{
+                bSocket.close();
+            }catch (IOException e){}
+        }
+
     }
 }
