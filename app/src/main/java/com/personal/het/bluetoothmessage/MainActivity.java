@@ -158,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
     //Implement Server side connection thread
     public void connectAsServer(View view){
         AcceptThread server = new AcceptThread();
-        server.run();
+        server.start();
     }
 
     //Implement Client side connection thread
@@ -167,7 +167,7 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(getApplicationContext(), "Please select a device first", Toast.LENGTH_SHORT).show();
         } else {
             ConnectThread client = new ConnectThread(bDevice);
-            client.run();
+            client.start();
             deviceSelected = false;
         }
     }
@@ -201,7 +201,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    //Server side thread. NOTE: Server searched for the connection initiated by Client
+    /**Server side thread. NOTE: Server searched for the connection initiated by Client*/
     private class AcceptThread extends Thread{
         private final BluetoothServerSocket bServerSocket;
 
@@ -270,7 +270,7 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             ConnectedThread connectedThread = new ConnectedThread(bSocket);
-            connectedThread.run();
+            connectedThread.start();
             //Manage the connection by implementing a separate thread (the ConnectedThread)
             //manageConnectedSocket(bSocket);
         }
