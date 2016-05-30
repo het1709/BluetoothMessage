@@ -280,6 +280,7 @@ public class MainActivity extends AppCompatActivity {
                 bSocket.connect();
             }catch(IOException connectException){
                 try{
+                    System.out.println("Error connecting through socket");
                     bSocket.close();
                 }catch(IOException closeException){
                     Toast.makeText(getApplicationContext(), "Problem closing socket", Toast.LENGTH_SHORT).show();
