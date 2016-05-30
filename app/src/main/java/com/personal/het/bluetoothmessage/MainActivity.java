@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Handler;
 import android.os.Message;
+import android.os.ParcelUuid;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.bluetooth.BluetoothAdapter;
@@ -40,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView msgReceived;
     private boolean deviceSelected = false;
 
-    private final UUID myUUID = UUID.fromString("f6ea2b4b-386d-4bcf-96e7-e3a4d2501a13");
+    private final UUID myUUID = UUID.fromString("0000110a-0000-1000-8000-00805f9b34fb");
     private final int MESSAGE_READ = 1;
 
     private Handler bHandler = new Handler(){
@@ -96,7 +97,6 @@ public class MainActivity extends AppCompatActivity {
         txtMessage = (EditText) findViewById(R.id.txtMessage);
         lvDiscoveredDevices.setAdapter(bDiscoveredAdapter);
 
-
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothDevice.ACTION_FOUND);
         filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
@@ -119,7 +119,11 @@ public class MainActivity extends AppCompatActivity {
                 String address = device.substring(deviceName.length()+1, device.length());
                 bDevice = bAdapter.getRemoteDevice(address);
                 deviceSelected = true;
-                Toast.makeText(getApplicationContext(), address, Toast.LENGTH_SHORT).show();
+                ParcelUuid[] deviceUUIDs = bDevice.getUuids();
+                for(ParcelUuid sample : deviceUUIDs){
+                    System.out.println(sample.toString());
+                }
+                //Toast.makeText(getApplicationContext(), bDevice.getUuids().toString(), Toast.LENGTH_SHORT).show();
             }
         });
         checkBTStatus();
@@ -209,7 +213,9 @@ public class MainActivity extends AppCompatActivity {
             BluetoothServerSocket temp = null;
             try{
                 temp = bAdapter.listenUsingRfcommWithServiceRecord("BluetoothMessage", myUUID);
-            }catch(IOException e){}
+            }catch(IOException e){
+                Toast.makeText(getApplicationContext(), "Problem listening to RFCOMM channel", Toast.LENGTH_SHORT).show();
+            }
             bServerSocket = temp;
         }
 
@@ -218,7 +224,10 @@ public class MainActivity extends AppCompatActivity {
             while(true){
                 try{
                     socket = bServerSocket.accept();
+                    System.out.print("Accept Socket connection status: "+ socket.isConnected());
+                    System.out.println(" with device: " + socket.getRemoteDevice().getName());
                 }catch (IOException e){
+                    Toast.makeText(getApplicationContext(), "Problem getting a socket from server socket", Toast.LENGTH_SHORT).show();
                     break;
                 }
             }
@@ -232,7 +241,9 @@ public class MainActivity extends AppCompatActivity {
                 connectedThread.write(message);
                 try{
                     bServerSocket.close();
-                }catch(IOException e){}
+                }catch(IOException e){
+                    Toast.makeText(getApplicationContext(), "Problem closing server socket", Toast.LENGTH_SHORT).show();
+                }
             }
 
         }
@@ -241,7 +252,9 @@ public class MainActivity extends AppCompatActivity {
         public void cancel(){
             try{
                 bServerSocket.close();
-            }catch (IOException e){}
+            }catch (IOException e){
+                Toast.makeText(getApplicationContext(), "Cannot cancel AcceptThread", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -255,7 +268,9 @@ public class MainActivity extends AppCompatActivity {
             bDevice = device;
             try{
                 temp = bDevice.createRfcommSocketToServiceRecord(myUUID);
-            }catch(IOException e){}
+            }catch(IOException e){
+                Toast.makeText(getApplicationContext(), "Problem creating RFCOMM channel", Toast.LENGTH_SHORT).show();
+            }
             bSocket = temp;
         }
 
@@ -266,7 +281,9 @@ public class MainActivity extends AppCompatActivity {
             }catch(IOException connectException){
                 try{
                     bSocket.close();
-                }catch(IOException closeException){}
+                }catch(IOException closeException){
+                    Toast.makeText(getApplicationContext(), "Problem closing socket", Toast.LENGTH_SHORT).show();
+                }
                 return;
             }
             ConnectedThread connectedThread = new ConnectedThread(bSocket);
@@ -278,7 +295,9 @@ public class MainActivity extends AppCompatActivity {
         public void cancel(){
             try{
                 bSocket.close();
-            }catch(IOException e){}
+            }catch(IOException e){
+                Toast.makeText(getApplicationContext(), "Problem canceling ConnectThread", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -295,7 +314,9 @@ public class MainActivity extends AppCompatActivity {
             try{
                 tempIn = socket.getInputStream();
                 tempOut = socket.getOutputStream();
-            } catch (IOException e){}
+            } catch (IOException e){
+                Toast.makeText(getApplicationContext(), "Problem getting Input and Output streams", Toast.LENGTH_SHORT).show();
+            }
             inStream = tempIn;
             outStream = tempOut;
         }
@@ -309,6 +330,7 @@ public class MainActivity extends AppCompatActivity {
                     bytes = inStream.read(buffer);
                     bHandler.obtainMessage(MESSAGE_READ, bytes, -1, buffer).sendToTarget();
                 } catch(IOException e){
+                    Toast.makeText(getApplicationContext(), "Problem receiving data", Toast.LENGTH_SHORT).show();
                     break;
                 }
             }
@@ -327,7 +349,9 @@ public class MainActivity extends AppCompatActivity {
         public void cancel(){
             try{
                 bSocket.close();
-            }catch (IOException e){}
+            }catch (IOException e){
+                Toast.makeText(getApplicationContext(), "Problem canceling ConnectedThread", Toast.LENGTH_SHORT).show();
+            }
         }
 
     }
