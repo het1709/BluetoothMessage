@@ -13,6 +13,7 @@ import android.os.ParcelUuid;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.bluetooth.BluetoothAdapter;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
@@ -266,9 +267,12 @@ public class MainActivity extends AppCompatActivity {
         public ConnectThread(BluetoothDevice device){
             BluetoothSocket temp = null;
             bDevice = device;
-            try{
-                temp = bDevice.createRfcommSocketToServiceRecord(myUUID);
-            }catch(IOException e){
+            try{;
+                //temp = bDevice.createRfcommSocketToServiceRecord(myUUID);
+                temp =(BluetoothSocket) device.getClass().getMethod("createRfcommSocket", new Class[] {int.class}).invoke(device,1);
+                temp.connect();
+            }catch(Exception e){
+                Log.e("NO SUCH METHOD ERROR:",e.toString());
                 Toast.makeText(getApplicationContext(), "Problem creating RFCOMM channel", Toast.LENGTH_SHORT).show();
             }
             bSocket = temp;
