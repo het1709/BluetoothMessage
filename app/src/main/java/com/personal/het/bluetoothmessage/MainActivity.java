@@ -26,6 +26,7 @@ import android.widget.Toast;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Set;
 import java.util.UUID;
 
@@ -261,19 +262,17 @@ public class MainActivity extends AppCompatActivity {
 
     /**Client side thread. NOTE: Client initiates connection*/
     private class ConnectThread extends Thread{
-        private final BluetoothSocket bSocket;
-        private final BluetoothDevice bDevice;
+        private  BluetoothSocket bSocket;
+        private BluetoothDevice bDevice;
 
         public ConnectThread(BluetoothDevice device){
             BluetoothSocket temp = null;
             bDevice = device;
             try{;
-                //temp = bDevice.createRfcommSocketToServiceRecord(myUUID);
-                temp =(BluetoothSocket) device.getClass().getMethod("createRfcommSocket", new Class[] {int.class}).invoke(device,1);
-                temp.connect();
-            }catch(Exception e){
-                Log.e("NO SUCH METHOD ERROR:",e.toString());
-                Toast.makeText(getApplicationContext(), "Problem creating RFCOMM channel", Toast.LENGTH_SHORT).show();
+                temp = bDevice.createRfcommSocketToServiceRecord(myUUID);
+                //temp =(BluetoothSocket) device.getClass().getMethod("createRfcommSocket", int.class).invoke(device,5);
+            }catch(IOException e){
+                Log.e("PRIMARY METHOD:",e.toString());
             }
             bSocket = temp;
         }
@@ -284,10 +283,22 @@ public class MainActivity extends AppCompatActivity {
                 bSocket.connect();
             }catch(IOException connectException){
                 try{
-                    System.out.println("Error connecting through socket");
-                    bSocket.close();
-                }catch(IOException closeException){
-                    Toast.makeText(getApplicationContext(), "Problem closing socket", Toast.LENGTH_SHORT).show();
+                    Log.e("SOCKET CONNECTING ERROR", connectException.toString());
+                    Log.e("SOCKET CONNECTING ERROR","First method failed, trying fallback");
+                    Log.e("SOCKET STATUS FAILED", "isConnected(): "+ bSocket.isConnected());
+                    bSocket =(BluetoothSocket) bDevice.getClass().getMethod("createRfcommSocket", int.class).invoke(bDevice,1);
+                    bSocket.connect();
+                    Log.e("CONNECTION SUCCESSFUL", "Fallback method worked");
+                    Log.e("SOCKET STATUS", "isConnected(): "+ bSocket.isConnected());
+                    //bSocket.close();
+                }catch(Exception exc){
+                    Log.e("SECOND METHOD", exc.toString());
+                    Log.e("SECOND METHOD","Fallback failed, closing socket");
+                    try{
+                        bSocket.close();
+                    }catch(IOException e){
+                        Log.e("CLOSING SOCKET", "Problem closing socket");
+                    }
                 }
                 return;
             }
