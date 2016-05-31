@@ -216,20 +216,23 @@ public class MainActivity extends AppCompatActivity {
             try{
                 temp = bAdapter.listenUsingRfcommWithServiceRecord("BluetoothMessage", myUUID);
             }catch(IOException e){
-                Toast.makeText(getApplicationContext(), "Problem listening to RFCOMM channel", Toast.LENGTH_SHORT).show();
+                Log.e("INITIALIZE SERVERSOCKET", e.toString());
+                Log.e("INITIALIZE SERVERSOCKET", "bServerSocket init: FAILED");
             }
             bServerSocket = temp;
         }
 
         public void run(){
             BluetoothSocket socket = null;
-            while(true){
+            while(socket == null){
                 try{
-                    socket = bServerSocket.accept();
-                    System.out.print("Accept Socket connection status: "+ socket.isConnected());
-                    System.out.println(" with device: " + socket.getRemoteDevice().getName());
+                    Log.e("SOCKET STATUS1", "Searching for socket");
+                    socket = bServerSocket.accept(10000);
+                    Log.e("SOCKET STATUS1","isConnected(): " + socket.isConnected());
+                    Log.e("SOCKET STATUS1","Device name: " + socket.getRemoteDevice().getName());
                 }catch (IOException e){
-                    Toast.makeText(getApplicationContext(), "Problem getting a socket from server socket", Toast.LENGTH_SHORT).show();
+                    Log.e("SOCKET ERROR1", e.toString());
+                    Log.e("SOCKET ERROR1", "Socket connection failed");
                     break;
                 }
             }
@@ -244,7 +247,8 @@ public class MainActivity extends AppCompatActivity {
                 try{
                     bServerSocket.close();
                 }catch(IOException e){
-                    Toast.makeText(getApplicationContext(), "Problem closing server socket", Toast.LENGTH_SHORT).show();
+                    Log.e("SERVERSOCKET CLOSE", e.toString());
+                    Log.e("SERVERSOCKET CLOSE", "Problem closing server socket");
                 }
             }
 
