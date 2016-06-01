@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView msgReceived;
     private boolean deviceSelected = false;
 
-    private final UUID myUUID = UUID.fromString("0000110a-0000-1000-8000-00805f9b34fb");
+    private UUID myUUID; // = UUID.fromString("0000110a-0000-1000-8000-00805f9b34fb");
     private final int MESSAGE_READ = 1;
 
     private Handler bHandler = new Handler(){
@@ -122,6 +122,7 @@ public class MainActivity extends AppCompatActivity {
                 bDevice = bAdapter.getRemoteDevice(address);
                 deviceSelected = true;
                 ParcelUuid[] deviceUUIDs = bDevice.getUuids();
+                myUUID = deviceUUIDs[0].getUuid();
                 for(ParcelUuid sample : deviceUUIDs){
                     System.out.println(sample.toString());
                 }
@@ -212,35 +213,41 @@ public class MainActivity extends AppCompatActivity {
         private BluetoothServerSocket bServerSocket;
 
         public AcceptThread(){
-            BluetoothServerSocket temp = null;
+            //BluetoothServerSocket temp = null;
             try{
-                temp = bAdapter.listenUsingRfcommWithServiceRecord("BluetoothMessage", myUUID);
+                while(bServerSocket == null){
+                    bServerSocket = bAdapter.listenUsingRfcommWithServiceRecord("BluetoothMessage", myUUID);
+                }
+                //temp = bAdapter.listenUsingRfcommWithServiceRecord("BluetoothMessage", myUUID);
             }catch(IOException e){
                 Log.e("INITIALIZE SERVERSOCKET", e.toString());
                 Log.e("INITIALIZE SERVERSOCKET", "bServerSocket init: FAILED");
             }
-            bServerSocket = temp;
+            //bServerSocket = temp;
             Log.e("bServerSocket: ", bServerSocket.toString());
         }
 
         public void run(){
             BluetoothSocket socket = null;
-            while(socket == null){
+            while(true){
                 try{
                     Log.e("SOCKET STATUS1", "Searching for socket");
-                    socket = bServerSocket.accept(10000);
+                    socket = bServerSocket.accept();
                     Log.e("SOCKET STATUS1","isConnected(): " + socket.isConnected());
                     Log.e("SOCKET STATUS1","Device name: " + socket.getRemoteDevice().getName());
+                    if(socket != null)
+                        break;
                 }catch (IOException e){
                     Log.e("SOCKET ERROR1", e.toString());
                     Log.e("SOCKET ERROR1", "Socket connection failed. Trying fallback method.");
                     try {
-
                         bServerSocket = (BluetoothServerSocket) bAdapter.getClass().getMethod("listenUsingRfcommOn", new Class[]{int.class}).invoke(bAdapter, 5);
                         Log.e("bServerSocketNew: ", bServerSocket.toString());
                         socket = bServerSocket.accept();
                         Log.e("SOCKET STATUS F","isConnected(): " + socket.isConnected());
                         Log.e("SOCKET STATUS F","Device name: " + socket.getRemoteDevice().getName());
+                        if(socket != null)
+                            break;
                     } catch (Exception e1) {
                         Log.e("SOCKET ERROR F", "Fallback method failed");
                         Log.e("SOCKET ERROR F", e1.toString());
@@ -283,15 +290,16 @@ public class MainActivity extends AppCompatActivity {
         private BluetoothDevice bDevice;
 
         public ConnectThread(BluetoothDevice device){
-            BluetoothSocket temp = null;
+           // BluetoothSocket temp = null;
             bDevice = device;
-            try{;
-                temp = bDevice.createRfcommSocketToServiceRecord(myUUID);
+            try{
+                bSocket = bDevice.createRfcommSocketToServiceRecord(myUUID);
+                //temp = bDevice.createRfcommSocketToServiceRecord(myUUID);
                 //temp =(BluetoothSocket) device.getClass().getMethod("createRfcommSocket", int.class).invoke(device,5);
             }catch(IOException e){
                 Log.e("PRIMARY METHOD:",e.toString());
             }
-            bSocket = temp;
+            //bSocket = temp;
         }
 
         public void run(){
@@ -303,7 +311,7 @@ public class MainActivity extends AppCompatActivity {
                     Log.e("SOCKET CONNECTING ERROR", connectException.toString());
                     Log.e("SOCKET CONNECTING ERROR","First method failed, trying fallback");
                     Log.e("SOCKET STATUS FAILED", "isConnected(): "+ bSocket.isConnected());
-                    bSocket =(BluetoothSocket) bDevice.getClass().getMethod("createRfcommSocket", int.class).invoke(bDevice, 21);
+                    bSocket = (BluetoothSocket) bDevice.getClass().getMethod("createRfcommSocket", int.class).invoke(bDevice, 21);
                     bSocket.connect();
                     Log.e("CONNECTION SUCCESSFUL", "Fallback method worked");
                     Log.e("SOCKET STATUS", "isConnected(): "+ bSocket.isConnected());
