@@ -209,7 +209,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**Server side thread. NOTE: Server searched for the connection initiated by Client*/
     private class AcceptThread extends Thread{
-        private final BluetoothServerSocket bServerSocket;
+        private BluetoothServerSocket bServerSocket;
 
         public AcceptThread(){
             BluetoothServerSocket temp = null;
@@ -220,6 +220,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.e("INITIALIZE SERVERSOCKET", "bServerSocket init: FAILED");
             }
             bServerSocket = temp;
+            Log.e("bServerSocket: ", bServerSocket.toString());
         }
 
         public void run(){
@@ -232,8 +233,20 @@ public class MainActivity extends AppCompatActivity {
                     Log.e("SOCKET STATUS1","Device name: " + socket.getRemoteDevice().getName());
                 }catch (IOException e){
                     Log.e("SOCKET ERROR1", e.toString());
-                    Log.e("SOCKET ERROR1", "Socket connection failed");
-                    break;
+                    Log.e("SOCKET ERROR1", "Socket connection failed. Trying fallback method.");
+                    try {
+
+                        bServerSocket = (BluetoothServerSocket) bAdapter.getClass().getMethod("listenUsingRfcommOn", new Class[]{int.class}).invoke(bAdapter, 5);
+                        Log.e("bServerSocketNew: ", bServerSocket.toString());
+                        socket = bServerSocket.accept();
+                        Log.e("SOCKET STATUS F","isConnected(): " + socket.isConnected());
+                        Log.e("SOCKET STATUS F","Device name: " + socket.getRemoteDevice().getName());
+                    } catch (Exception e1) {
+                        Log.e("SOCKET ERROR F", "Fallback method failed");
+                        Log.e("SOCKET ERROR F", e1.toString());
+                        Log.e("CAUSE: ", e1.getCause().toString());
+                        break;
+                    }
                 }
             }
             if(socket != null){
@@ -290,14 +303,16 @@ public class MainActivity extends AppCompatActivity {
                     Log.e("SOCKET CONNECTING ERROR", connectException.toString());
                     Log.e("SOCKET CONNECTING ERROR","First method failed, trying fallback");
                     Log.e("SOCKET STATUS FAILED", "isConnected(): "+ bSocket.isConnected());
-                    bSocket =(BluetoothSocket) bDevice.getClass().getMethod("createRfcommSocket", int.class).invoke(bDevice,1);
+                    bSocket =(BluetoothSocket) bDevice.getClass().getMethod("createRfcommSocket", int.class).invoke(bDevice, 21);
                     bSocket.connect();
                     Log.e("CONNECTION SUCCESSFUL", "Fallback method worked");
                     Log.e("SOCKET STATUS", "isConnected(): "+ bSocket.isConnected());
+                    Log.e("SOCKET STATUS", "Listening to port: " + bSocket.toString());
                     //bSocket.close();
                 }catch(Exception exc){
                     Log.e("SECOND METHOD", exc.toString());
                     Log.e("SECOND METHOD","Fallback failed, closing socket");
+                    exc.printStackTrace();
                     try{
                         bSocket.close();
                     }catch(IOException e){
